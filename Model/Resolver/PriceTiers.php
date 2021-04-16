@@ -84,8 +84,8 @@ class PriceTiers extends SourcePriceTiers
         ValueFactory $valueFactory,
         TiersFactory $tiersFactory,
         GetCustomerGroup $getCustomerGroup,
-        Discount $discount, PriceProviderPool
-        $priceProviderPool,
+        Discount $discount,
+        PriceProviderPool $priceProviderPool,
         PriceCurrencyInterface $priceCurrency
     ) {
         parent::__construct(
@@ -159,7 +159,7 @@ class PriceTiers extends SourcePriceTiers
      * @param string $currencyCode
      * @return array
      */
-    private function formatAndFilterTierPrices(
+    protected function formatAndFilterTierPrices(
         float $productPrice,
         array $tierPrices,
         string $currencyCode
@@ -179,7 +179,7 @@ class PriceTiers extends SourcePriceTiers
      * @param string $currencyCode
      * @param ProductTierPriceInterface $tierPrice
      */
-    private function formatTierPrices(float $productPrice, string $currencyCode, $tierPrice)
+    protected function formatTierPrices(float $productPrice, string $currencyCode, $tierPrice)
     {
         $percentValue = $tierPrice->getExtensionAttributes()->getPercentageValue();
         if ($percentValue && is_numeric($percentValue)) {
@@ -205,7 +205,7 @@ class PriceTiers extends SourcePriceTiers
      * @param int $key
      * @param ProductTierPriceInterface $tierPriceItem
      */
-    private function filterTierPrices(
+    protected function filterTierPrices(
         array $tierPrices,
         int $key,
         ProductTierPriceInterface $tierPriceItem
