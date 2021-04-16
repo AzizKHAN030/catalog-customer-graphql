@@ -22,10 +22,8 @@ use Magento\CatalogGraphQl\Model\Resolver\Product\Price\ProviderPool as PricePro
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Query\Resolver\ValueFactory;
-use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
 use Magento\Framework\Pricing\PriceCurrencyInterface;
-use Magento\Store\Api\Data\StoreInterface;
 
 class PriceTiers extends SourcePriceTiers
 {
@@ -128,8 +126,7 @@ class PriceTiers extends SourcePriceTiers
         $product = $value['model'];
 
         if (
-            $product->hasData('can_show_price')
-            && $product->getData('can_show_price') === false
+            ($product->hasData('can_show_price') && $product->getData('can_show_price') === false)
             || !$product->getTierPrices()
         ) {
             return [];
@@ -140,7 +137,7 @@ class PriceTiers extends SourcePriceTiers
 
         return $this->valueFactory->create(
             function () use ($productId, $context) {
-                // This lines added to clean previouse results
+                // This lines added to clean previous results
                 $this->formatAndFilterTierPrices = [];
                 $this->tierPricesQty = [];
 
@@ -167,7 +164,6 @@ class PriceTiers extends SourcePriceTiers
         array $tierPrices,
         string $currencyCode
     ): array {
-
         foreach ($tierPrices as $key => $tierPrice) {
             $tierPrice->setValue($this->priceCurrency->convertAndRound($tierPrice->getValue()));
             $this->formatTierPrices($productPrice, $currencyCode, $tierPrice);
