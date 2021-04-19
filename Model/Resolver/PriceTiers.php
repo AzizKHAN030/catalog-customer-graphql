@@ -30,47 +30,42 @@ class PriceTiers extends SourcePriceTiers
     /**
      * @var TiersFactory
      */
-    private $tiersFactory;
+    protected $tiersFactory;
 
     /**
      * @var ValueFactory
      */
-    private $valueFactory;
+    protected $valueFactory;
 
     /**
      * @var GetCustomerGroup
      */
-    private $getCustomerGroup;
+    protected $getCustomerGroup;
 
     /**
      * @var int
      */
-    private $customerGroupId;
+    protected $customerGroupId;
 
     /**
      * @var Tiers
      */
-    private $tiers;
+    protected $tiers;
 
     /**
      * @var Discount
      */
-    private $discount;
+    protected $discount;
 
     /**
      * @var PriceCurrencyInterface
      */
-    private $priceCurrency;
+    protected $priceCurrency;
 
     /**
      * @var array
      */
-    private $formatAndFilterTierPrices = [];
-
-    /**
-     * @var array
-     */
-    private $tierPricesQty = [];
+    protected $tierPricesQty = [];
 
     /**
      * @param ValueFactory $valueFactory
@@ -138,7 +133,6 @@ class PriceTiers extends SourcePriceTiers
         return $this->valueFactory->create(
             function () use ($productId, $context) {
                 // This lines added to clean previous results
-                $this->formatAndFilterTierPrices = [];
                 $this->tierPricesQty = [];
 
                 $currencyCode = $context->getExtensionAttributes()->getStore()->getCurrentCurrencyCode();
@@ -164,12 +158,16 @@ class PriceTiers extends SourcePriceTiers
         array $tierPrices,
         string $currencyCode
     ): array {
+        $result = [];
+
         foreach ($tierPrices as $key => $tierPrice) {
             $tierPrice->setValue($this->priceCurrency->convertAndRound($tierPrice->getValue()));
-            $this->formatTierPrices($productPrice, $currencyCode, $tierPrice);
-            $this->filterTierPrices($tierPrices, $key, $tierPrice);
+            $formattedTierPrices = $this->formatTierPrices($productPrice, $currencyCode, $tierPrice);
+            $filteredTierPrices = $this->filterTierPrices($tierPrices, $key, $tierPrice, $formattedTierPrices);
+            $result[] = $filteredTierPrices;
         }
-        return $this->formatAndFilterTierPrices;
+
+        return $result;
     }
 
     /**
@@ -188,7 +186,7 @@ class PriceTiers extends SourcePriceTiers
             $discount = $this->discount->getDiscountByDifference($productPrice, (float)$tierPrice->getValue());
         }
 
-        $this->formatAndFilterTierPrices[] = [
+        return [
             "discount" => $discount,
             "quantity" => $tierPrice->getQty(),
             "final_price" => [
@@ -208,19 +206,22 @@ class PriceTiers extends SourcePriceTiers
     protected function filterTierPrices(
         array $tierPrices,
         int $key,
-        ProductTierPriceInterface $tierPriceItem
+        ProductTierPriceInterface $tierPriceItem,
+        $formattedTierPrice
     ) {
         $qty = $tierPriceItem->getQty();
         if (isset($this->tierPricesQty[$qty])) {
             $priceQty = $this->tierPricesQty[$qty];
             if ((float)$tierPriceItem->getValue() < (float)$tierPrices[$priceQty]->getValue()) {
-                unset($this->formatAndFilterTierPrices[$priceQty]);
+                unset($formattedTierPrice[$priceQty]);
                 $this->tierPricesQty[$priceQty] = $key;
             } else {
-                unset($this->formatAndFilterTierPrices[$key]);
+                unset($formattedTierPrice[$key]);
             }
         } else {
             $this->tierPricesQty[$qty] = $key;
         }
+
+        return $formattedTierPrice;
     }
 }
